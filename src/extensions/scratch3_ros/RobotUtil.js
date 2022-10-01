@@ -68,7 +68,8 @@ class Scratch3RobotBase extends Scratch3RosBase {
         return new Promise((resolve, reject) => {
             that.ros.getTopic(topic).then(rosTopic => {
                 rosTopic.subscribe(msg => {
-                    if (test(msg)) {
+                    // always return on first message if no test function is given
+                    if (test === undefined || test(msg)) {
                         if (unsubscribe) rosTopic.unsubscribe();
                         resolve();
                     }
