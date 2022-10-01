@@ -2,6 +2,7 @@ const math = require('mathjs');
 const JSON = require('circular-json');
 const ROSLIB = require('roslib');
 const Scratch3LooksBlocks = require('../../blocks/scratch3_looks.js')
+const Variable = require('../../engine/variable');
 
 class RosUtil extends ROSLIB.Ros {
     constructor (runtime, extensionId, options) {
@@ -414,6 +415,19 @@ class Scratch3RosBase {
         }
 
         if (varlist.length === 0) return [{value: 'my variable', text: 'my variable'}];
+        return varlist.map(val => ({value: val, text: val}));
+    }
+
+    _updateListVariableList () {
+        let varlist;
+        try {
+            varlist = this.runtime.getEditingTarget().getAllVariableNamesInScopeByType(
+                Variable.LIST_TYPE);
+        } catch (err) {
+            return [{value: 'my list', text: 'my list'}];
+        }
+
+        if (varlist.length === 0) return [{value: 'my list', text: 'my list'}];
         return varlist.map(val => ({value: val, text: val}));
     }
 

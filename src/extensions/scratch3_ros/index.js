@@ -2,6 +2,7 @@ const math = require('mathjs');
 const JSON = require('circular-json');
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
+const Variable = require('../../engine/variable');
 const {Scratch3RosBase} = require('./RosUtil');
 const icon = require('./icon');
 
@@ -162,6 +163,18 @@ class Scratch3RosBlocks extends Scratch3RosBase {
         // TODO: cloud variables
     }
 
+    setListTo ({VAR, VALUE}, util) {
+        const list = util.target.lookupVariableByNameAndType(VAR, Variable.LIST_TYPE);
+        if (!list) return;
+        const val = Array.isArray(VALUE) ?
+              VALUE.map(v => this._tryParse(v, v)) :
+              this._tryParse(VALUE, VALUE);
+        if (!(Array.isArray(val))) return;
+        // update values
+        list.value = val;
+        list._monitorUpToDate = false;
+    }
+
     showVariable (args) {
         this._changeVariableVisibility(args, true);
     }
@@ -200,6 +213,11 @@ class Scratch3RosBlocks extends Scratch3RosBase {
             type: ArgumentType.STRING,
             menu: 'variablesMenu',
             defaultValue: this._updateVariableList()[0].text
+        };
+        const listVariableArg = {
+            type: ArgumentType.STRING,
+            menu: 'listVariablesMenu',
+            defaultValue: this._updateListVariableList()[0].text
         };
         const topicArg = {
             type: ArgumentType.STRING,
@@ -322,6 +340,15 @@ class Scratch3RosBlocks extends Scratch3RosBase {
                     }
                 },
                 {
+                    opcode: 'setListTo',
+                    blockType: BlockType.COMMAND,
+                    text: 'Set [VAR] to [VALUE]',
+                    arguments: {
+                        VAR: listVariableArg,
+                        VALUE: stringArg('[1,2,3]')
+                    }
+                },
+                {
                     opcode: 'showVariable',
                     blockType: BlockType.COMMAND,
                     text: 'Show [VAR] [SLOT]',
@@ -355,6 +382,7 @@ class Scratch3RosBlocks extends Scratch3RosBase {
                 actionsMenu: '_updateActionList',
                 servicesMenu: '_updateServiceList',
                 variablesMenu: '_updateVariableList',
+                listVariablesMenu: '_updateListVariableList',
                 paramsMenu: '_updateParamList'
             }
         };
