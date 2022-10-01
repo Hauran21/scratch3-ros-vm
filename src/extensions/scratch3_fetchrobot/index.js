@@ -57,10 +57,8 @@ class Scratch3FetchRobotBlocks extends Scratch3RobotBase {
         msg = JSON.parse(JSON.stringify(spot))
         msg.header = {frame_id: 'map'};
 
-        return this._waitMessage(
-            '/move_base/result',
-            this.ros.publishTopic('/move_base_simple/goal', msg)
-        ).
+        this.ros.publishTopic('/move_base_simple/goal', msg);
+        return this._waitMessage('/move_base/result').
             catch(err => this._reportError(err));
     }
 

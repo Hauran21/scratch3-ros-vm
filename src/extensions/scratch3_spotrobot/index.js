@@ -105,10 +105,8 @@ class Scratch3SpotRobotBlocks extends Scratch3RobotBase {
             orientation:  {x: 0, y: 0, z: 0.707107, w: 0.707107}
         };
         const msg = this._makeGoal(pose, TIME);
-        return this._waitMessage(
-            '/spot/trajectory/result',
-            this.ros.publishTopic('/spot/trajectory/goal', msg)
-        ).
+        this.ros.publishTopic('/spot/trajectory/goal', msg);
+        return this._waitMessage('/spot/trajectory/result').
             catch(err => this._reportError(err));
     }
 
@@ -120,10 +118,8 @@ class Scratch3SpotRobotBlocks extends Scratch3RobotBase {
         };
         const msg = this._makeGoal(pose, TIME);
 
-        return this._waitMessage(
-            '/spot/trajectory/result',
-            this.ros.publishTopic('/spot/trajectory/goal', msg)
-        ).
+        this.ros.publishTopic('/spot/trajectory/goal', msg);
+        return this._waitMessage('/spot/trajectory/result').
             catch(err => this._reportError(err));
     }
 
@@ -135,10 +131,8 @@ class Scratch3SpotRobotBlocks extends Scratch3RobotBase {
         };
         const msg = this._makeGoal(pose, TIME);
 
-        return this._waitMessage(
-            '/spot/trajectory/result',
-            this.ros.publishTopic('/spot/trajectory/goal', msg)
-        ).
+        this.ros.publishTopic('/spot/trajectory/goal', msg);
+        return this._waitMessage('/spot/trajectory/result').
             catch(err => this._reportError(err));
     }
 
