@@ -271,7 +271,9 @@ class Scratch3RosBase {
     }
 
     disconnect () {
-        this.ros.socket.close();
+        if (this.ros) {
+            this.ros.socket.close();
+        }
     }
 
     isConnected () {

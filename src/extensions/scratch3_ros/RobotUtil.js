@@ -20,11 +20,13 @@ class Scratch3RobotBase extends Scratch3RosBase {
 
     connect (url) {
         super.connect(url);
-        this.ros.on('connection', () => {
-            console.log("Setting sound servers...");
-            this._setSoundServer(this.sound_server);
-            this._setSoundServer(this.sound_server_jp, true);
-        });
+        if (this.ros) {
+            this.ros.on('connection', () => {
+                console.log("Setting sound servers...");
+                this._setSoundServer(this.sound_server);
+                this._setSoundServer(this.sound_server_jp, true);
+            });
+        }
     }
 
     _stopApp (app, raiseError) {
