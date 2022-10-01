@@ -20,6 +20,7 @@ class RosUtil extends ROSLIB.Ros {
         });
 
         this.on('close', () => {
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
             if (this.everConnected) {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
                     message: `Scratch lost connection to`,
@@ -29,6 +30,7 @@ class RosUtil extends ROSLIB.Ros {
         });
 
         this.on('error', () => {
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
                 message: `Scratch lost connection to`,
                 extensionId: this.extensionId
