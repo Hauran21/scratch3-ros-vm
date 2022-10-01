@@ -260,7 +260,14 @@ class Scratch3RosBase {
     }
 
     connect (url) {
-        this.ros = new RosUtil(this.runtime, this.extensionId, {url: url});
+        try {
+            this.ros = new RosUtil(this.runtime, this.extensionId, {url: url});
+        } catch (err) {
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                message: `Scratch couldn't connect to`,
+                extensionId: this.extensionId
+            });
+        }
     }
 
     disconnect () {
