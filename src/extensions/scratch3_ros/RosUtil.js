@@ -265,6 +265,7 @@ class Scratch3RosBase {
         try {
             this.ros = new RosUtil(this.runtime, this.extensionId, {url: url});
         } catch (err) {
+            console.error(err);
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
                 message: `Scratch couldn't connect to`,
                 extensionId: this.extensionId
