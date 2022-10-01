@@ -88,7 +88,9 @@ class Scratch3RobotBase extends Scratch3RosBase {
                               msg => msg.status == expectedStart).
                 then(val => {
                     this._waitMessage(statusTopic,
-                                      msg => msg.status == expectedStop).
+                                      // can have an additional cause
+                                      // e.g. stopping <app> by timeout
+                                      msg => msg.status.startsWith(expectedStop)).
                         then(val => {
                             this.active_apps.splice(this.active_apps.indexOf(app));
                             resolve();
