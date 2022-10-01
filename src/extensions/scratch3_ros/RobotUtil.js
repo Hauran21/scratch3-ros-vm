@@ -19,7 +19,7 @@ class Scratch3RobotBase extends Scratch3RosBase {
     }
 
     connect (url) {
-        this.ros = new RosUtil(this.runtime, this.extensionId, {url: url});
+        super.connect(url);
         this.ros.on('connection', () => {
             console.log("Setting sound servers...");
             this._setSoundServer(this.sound_server);
