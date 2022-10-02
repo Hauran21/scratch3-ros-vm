@@ -209,6 +209,10 @@ class Scratch3RosBlocks extends Scratch3RosBase {
             type: ArgumentType.STRING,
             defaultValue: defValue
         });
+        const reporterMenu = opCode => ({
+            acceptReporters: true,
+            items: opCode
+        });
         const variableArg = {
             type: ArgumentType.STRING,
             menu: 'variablesMenu',
@@ -378,12 +382,12 @@ class Scratch3RosBlocks extends Scratch3RosBase {
                 }
             ],
             menus: {
-                topicsMenu: '_updateTopicList',
-                actionsMenu: '_updateActionList',
-                servicesMenu: '_updateServiceList',
+                topicsMenu: reporterMenu('_updateTopicList'),
+                actionsMenu: reporterMenu('_updateActionList'),
+                servicesMenu: reporterMenu('_updateServiceList'),
+                paramsMenu: reporterMenu('_updateParamList'),
                 variablesMenu: '_updateVariableList',
                 listVariablesMenu: '_updateListVariableList',
-                paramsMenu: '_updateParamList'
             }
         };
     }
