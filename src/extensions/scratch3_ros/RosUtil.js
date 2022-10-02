@@ -339,7 +339,7 @@ class Scratch3RosBase {
             this.runtime.monitorBlocks.createBlock({
                 id: id,
                 targetId: targetId,
-                opcode: 'ros_getSlot',
+                opcode: `${this.extensionId}_getSlot`,
                 fields: {OBJECT: {value: VAR}, SLOT: {value: SLOT}}
             });
         }
