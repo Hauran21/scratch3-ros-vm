@@ -41,10 +41,17 @@ Examples can be found at the [examples directory](https://github.com/Affonso-Gui
 
 1. On a terminal, launch `roslaunch rosbridge_server rosbridge_websocket.launch`
 2. Access http://scratch3-ros.jsk.imi.i.u-tokyo.ac.jp and load the example file
-3. Click on the warning sign near the ROS blocks menu to connect with rosbridge. Use `localhost` as the master URI.
+3. Use `localhost` as the master URI. If a warning sign appears near the ROS blocks, click it to reconnect.
 ![warning](https://user-images.githubusercontent.com/20625381/50582008-55e3e400-0ea2-11e9-942e-496bda7c557a.png)
 4. Check comments for other required nodes
 5. Click the green flag to start!
+
+Simple chatter:
+![scratch3ros_rosext_chatter](https://user-images.githubusercontent.com/20625381/193435672-27b23575-801a-4c63-947e-d148fadb8b5b.png)
+Simple actionlib client:
+![scratch3ros_rosext_fibonacci](https://user-images.githubusercontent.com/20625381/193435676-569b8dad-64b3-4afb-9581-8d5bb77f673b.png)
+Turtlesim:
+![scratch3ros_rosext_turtlesim](https://user-images.githubusercontent.com/20625381/193435653-437c8183-a8af-489c-ab84-943ea39a3483.png)
 
 ## Blocks API
 
@@ -60,6 +67,6 @@ Git clone the repositories below and follow instructions at https://github.com/L
 
 ## Develop a library for your own robot
 
-You can include Scratch3-ROS on your Scratch project and create custom block libraries for your own robot. An example is given in the `fetch_extension` branch:
-- https://github.com/Affonso-Gui/scratch3-ros-vm/tree/fetch_extension
-- https://github.com/Affonso-Gui/scratch3-ros-gui/tree/fetch_extension
+You can include Scratch3-ROS on your Scratch project and create custom block libraries for your own robot. Multiple examples are given in the `jsk_robot` branch:
+- https://github.com/Affonso-Gui/scratch3-ros-vm/tree/jsk_robots
+- https://github.com/Affonso-Gui/scratch3-ros-gui/tree/jsk_robots
