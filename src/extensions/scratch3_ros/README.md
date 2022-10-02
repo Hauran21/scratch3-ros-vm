@@ -51,7 +51,7 @@ Simple chatter:
 Simple actionlib client:
 ![scratch3ros_rosext_fibonacci](https://user-images.githubusercontent.com/20625381/193435676-569b8dad-64b3-4afb-9581-8d5bb77f673b.png)
 Turtlesim:
-![scratch3ros_rosext_turtlesim](https://user-images.githubusercontent.com/20625381/193435653-437c8183-a8af-489c-ab84-943ea39a3483.png)
+![scratch3ros_rosext_turtlesim](https://user-images.githubusercontent.com/20625381/193437783-54b3aed3-8b38-48ed-a359-ba497d4b727e.png)
 
 ## Blocks API
 
