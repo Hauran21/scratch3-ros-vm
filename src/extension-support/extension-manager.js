@@ -147,6 +147,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL, extensionId) {
+        log.info(`Loading ${extensionURL} ${extensionId}...`);
         // load from URL. If extensionId is also provided, pass it to the constructor
         if (builtinExtensions.hasOwnProperty(extensionURL.split(":")[0])) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
