@@ -3,6 +3,7 @@ const JSON = require('circular-json');
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
 const Variable = require('../../engine/variable');
+const ROSLIB = require('roslib');
 const {Scratch3RosBase} = require('./RosUtil');
 const icon = require('./icon');
 
@@ -33,27 +34,19 @@ class Scratch3RosBlocks extends Scratch3RosBase {
 
     // customize to handle unadvertised topics
     publishTopic ({MSG, TOPIC}, util) {
-        const ROS = this.ros;
-        let msg = this._getVariableValue(MSG, util.target);
-        if (msg === null || typeof msg === 'undefined') msg = this._tryParse(MSG);
+        if (TOPIC && !TOPIC.startsWith('/')) TOPIC = `/${TOPIC}`;
+        const msg = this._getVariableValue(MSG, util.target) || this._tryParse(REQUEST);
         if (!this._isJSON(msg)) msg = {data: msg};
-
-        ROS.getTopic(TOPIC).then(rosTopic => {
-            if (!rosTopic.name) return;
-            const keys = Object.keys(msg);
-            if (rosTopic.messageType) {
-                if (rosTopic.messageType === 'std_msgs/String' &&
-                    !(keys.length === 1 && keys[0] === 'data')) {
-                    msg = {data: JSON.stringify(msg)};
-                }
-            } else {
-                if (!(keys.length === 1 && keys[0] === 'data')) {
-                    msg = {data: JSON.stringify(msg)};
-                }
-                rosTopic.messageType = ROS.getRosType(msg.data);
-            }
+        this.ros.publishTopic(TOPIC, msg).catch(err => {
+            console.log(err);
+            console.log("Advertising a new topic...");
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : this.ros.getRosType(msg.data),
+            });
             rosTopic.publish(msg);
-        });
+        }).catch(err => this._reportError(err));
     }
 
     callService ({REQUEST, SERVICE}, util) {
