@@ -65,6 +65,19 @@ Git clone the repositories below and follow instructions at https://github.com/L
 - https://github.com/Affonso-Gui/scratch3-ros-vm
 - https://github.com/Affonso-Gui/scratch3-ros-parser
 
+For a quick overview:
+```bash
+git clone https://github.com/Affonso-Gui/scratch3-ros-gui
+git clone https://github.com/Affonso-Gui/scratch3-ros-vm
+git clone https://github.com/Affonso-Gui/scratch3-ros-parser
+cd scratch3-ros-parser && npm install && npm link
+cd ../scratch3-ros-vm && npm install && npm link
+cd ../scratch3-ros-gui && npm install && npm link scratch-parser scratch-vm
+npm start
+```
+
+The current version have been tested with npm 9.8.1 and node 18.18.0.
+
 ## Develop a library for your own robot
 
 You can include Scratch3-ROS on your Scratch project and create custom block libraries for your own robot. Multiple examples are given in the `jsk_robot` branch:
