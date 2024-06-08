@@ -18,7 +18,7 @@ When communicating with the ROS interface, message types are mostly infered by t
 This also means, however, that this extension doesn't do well in advertising new topics or serving services. Maybe these will be supported in future releases, but for now Scratch interface is designed to act as a ROS **client**, publishing to topics and called nodes already advertised by some other node, which should be responsible to handle the message from Scratch and do all of the robotics stuff.
 
 ## Quick Start
-0. [Install ROS](http://wiki.ros.org/ROS/Installation) and the following dependencies. This project was tested on ROS kinetic, but should run well in other distributions as well.
+0. [Install ROS](http://wiki.ros.org/ROS/Installation) and the following dependencies. Ths project was tested on ROS1 (kinetic, melodic, noetic).
 ```bash
 # Install main dependencies
 sudo apt install ros-kinetic-rosbridge-server
