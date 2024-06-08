@@ -18,7 +18,7 @@ When communicating with the ROS interface, message types are mostly infered by t
 This also means, however, that this extension doesn't do well in advertising new topics or serving services. Maybe these will be supported in future releases, but for now Scratch interface is designed to act as a ROS **client**, publishing to topics and called nodes already advertised by some other node, which should be responsible to handle the message from Scratch and do all of the robotics stuff.
 
 ## Quick Start
-0. [Install ROS](http://wiki.ros.org/ROS/Installation) and the following dependencies. This project was tested on ROS kinetic, but should run well in other distributions as well.
+0. [Install ROS](http://wiki.ros.org/ROS/Installation) and the following dependencies. Ths project was tested on ROS1 (kinetic, melodic, noetic).
 ```bash
 # Install main dependencies
 sudo apt install ros-kinetic-rosbridge-server
@@ -26,7 +26,7 @@ sudo apt install ros-kinetic-rosbridge-server
 sudo apt install ros-kinetic-turtlesim ros-kinetic-actionlib-tutorials 
 ```
 
-1. Access http://scratch3-ros.jsk.imi.i.u-tokyo.ac.jp . The extension currently doesn't support https access.
+1. Access http://www.scratch3ros.com . The extension currently doesn't support https access!
 
 2. Open a terminal and fire up the following command
 ```
@@ -40,7 +40,7 @@ roslaunch rosbridge_server rosbridge_websocket.launch
 Examples can be found at the [examples directory](https://github.com/Affonso-Gui/scratch3-ros-vm/tree/develop/src/extensions/scratch3_ros/examples). To run the examples:
 
 1. On a terminal, launch `roslaunch rosbridge_server rosbridge_websocket.launch`
-2. Access http://scratch3-ros.jsk.imi.i.u-tokyo.ac.jp and load the example file
+2. Access http://www.scratch3ros.com/ and load the example file
 3. Use `localhost` as the master URI. If a warning sign appears near the ROS blocks, click it to reconnect.
 ![warning](https://user-images.githubusercontent.com/20625381/50582008-55e3e400-0ea2-11e9-942e-496bda7c557a.png)
 4. Check comments for other required nodes
