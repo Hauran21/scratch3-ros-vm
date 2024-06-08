@@ -26,7 +26,7 @@ sudo apt install ros-kinetic-rosbridge-server
 sudo apt install ros-kinetic-turtlesim ros-kinetic-actionlib-tutorials 
 ```
 
-1. Access http://scratch3-ros.jsk.imi.i.u-tokyo.ac.jp
+1. Access http://www.scratch3ros.com . The extension currently doesn't support https access!
 
 2. Open a terminal and fire up the following command
 ```
@@ -40,8 +40,8 @@ roslaunch rosbridge_server rosbridge_websocket.launch
 Examples can be found at the [examples directory](https://github.com/Affonso-Gui/scratch3-ros-vm/tree/develop/src/extensions/scratch3_ros/examples). To run the examples:
 
 1. On a terminal, launch `roslaunch rosbridge_server rosbridge_websocket.launch`
-2. Access http://scratch3-ros.jsk.imi.i.u-tokyo.ac.jp and load the example file
-3. Click on the warning sign near the ROS blocks menu to connect with rosbridge. Use `localhost` as the master URI.
+2. Access http://www.scratch3ros.com/ and load the example file
+3. Use `localhost` as the master URI. If a warning sign appears near the ROS blocks, click it to reconnect.
 ![warning](https://user-images.githubusercontent.com/20625381/50582008-55e3e400-0ea2-11e9-942e-496bda7c557a.png)
 4. Check comments for other required nodes
 5. Click the green flag to start!
