@@ -31,8 +31,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     ServiceMoveForward ({REQUEST}, util) {
-        SERVICE = "/cmd_vel_service"
-        const req = this._getVariableValue(REQUEST, util.target) || this._tryParse(REQUEST);
+        const SERVICE = "/cmd_vel_service";
+        let req = this._getVariableValue(REQUEST, util.target) || this._tryParse(REQUEST);
         return this.ros.callService(SERVICE, req).
             then(val => JSON.stringify(val)).
             catch(err => this._reportError(err));
@@ -60,6 +60,18 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     getInfo () {
+        const topicArgs = {
+            type: ArgumentType.STRING,
+            defaultValue: ' /cmd_vel\ '
+        };
+        const serviceArgs = {
+            type: ArgumentType.STRING,
+            defaultValue: ' {"data": true} '
+        };
+        const stringArgs = {
+            type: ArgumentType.STRING,
+            defaultValue: ' 50 '
+        };
 
 
         // OG Args
@@ -115,10 +127,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     blockType: BlockType.COMMAND,
                     text: 'Move forward [SPEED]',
                     arguments: {
-                        SPEED: {
-                            type: ArgumentType.STRING,
-                            defaultValue: '50'
-                        }
+                        SPEED: stringArgs
                     }
                 },
                 {
@@ -126,10 +135,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     blockType: BlockType.COMMAND,
                     text: 'Service move forward [REQUEST]',
                     arguments: {
-                        REQUEST: {
-                            type: ArgumentType.STRING,
-                            defaultValue: ' data:\ false\ '
-                        }
+                        REQUEST: serviceArgs
                     }
                 },
                 {
