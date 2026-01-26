@@ -38,6 +38,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             catch(err => this._reportError(err));
     }
 
+    ServiceMoveForwardFixed ({}, util) {
+        return this.ros.callService("/cmd_vel_service", {data: true}).
+            then(val => JSON.stringify(val)).
+            catch(err => this._reportError(err));
+    }
+    
+
     //TODO subscriber
     showSpeed ({}) {
         const TOPIC = "/cmd_vel"
@@ -66,7 +73,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         };
         const serviceArgs = {
             type: ArgumentType.STRING,
-            defaultValue: ' {"data": true} '
+            defaultValue: '{"data": true}'
         };
         const stringArgs = {
             type: ArgumentType.STRING,
@@ -137,6 +144,12 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     arguments: {
                         REQUEST: serviceArgs
                     }
+                },
+                {
+                    opcode: 'ServiceMoveForwardFixed',
+                    blockType: BlockType.COMMAND,
+                    text: 'Service move forward',
+                    arguments: {}
                 },
                 {
                     opcode: 'showSpeed',
