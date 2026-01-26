@@ -30,7 +30,7 @@ const builtinExtensions = {
     pepperRobot: () => require('../extensions/scratch3_pepperrobot'),
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
-    ros: () => require('../extensions/scratch3_ros'),
+    rcjbot: () => require('../extensions/scratch3_rcjbot'),
 };
 
 /**
