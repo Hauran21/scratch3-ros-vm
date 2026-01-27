@@ -38,12 +38,6 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             catch(err => this._reportError(err));
     }
 
-    ServiceMoveForwardFixed ({}, util) {
-        return this.ros.callService("/cmd_vel_service", {data: true}).
-            then(val => JSON.stringify(val)).
-            catch(err => this._reportError(err));
-    }
-
     // RCJBot specific services
     AlignService ({}, util) {
         return this.ros.callService("/push_action_align", {}).
@@ -69,8 +63,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             catch(err => this._reportError(err));
     }
     
-    showSpeed ({}) {
-        const TOPIC = "/cmd_vel"
+    ShowFrontDistance ({}) {
+        const TOPIC = "/cmd_vel_pub";
         const that = this;
         return new Promise(resolve => {
             that.ros.getTopic(TOPIC).then(
@@ -80,10 +74,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                         if (rosTopic.messageType === 'std_msgs/String') {
                             msg.data = that._tryParse(msg.data, msg.data);
                         }
-                        msg.toString = function () { return JSON.stringify(this); };
-                        msg.constructor = Object;
-                        resolve(msg);
-                        variableArg = msg.data;
+                        // Return the numeric value instead of the full object
+                        resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
                     });
                 }).catch(err => this._reportError(err));
         });
@@ -163,24 +155,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'ServiceMoveForward',
                     blockType: BlockType.COMMAND,
-                    text: 'Service move forward [REQUEST]',
-                    arguments: {
-                        REQUEST: serviceArgs
-                    }
-                },
-                {
-                    opcode: 'ServiceMoveForwardFixed',
-                    blockType: BlockType.COMMAND,
                     text: 'Service move forward',
                     arguments: {}
-                },
-                {
-                    opcode: 'showSpeed',
-                    blockType: BlockType.REPORTER,
-                    text: 'Show current speed [SPEED_SUB]',
-                    arguments: {
-                        SPEED_SUB: variableArg
-                    }
                 },
 
                 // RCJBot specific services
@@ -207,6 +183,17 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     blockType: BlockType.COMMAND,
                     text: 'Turn Rcjbot right',
                     arguments: {}
+                },
+                {
+                    opcode: 'ShowFrontDistance',
+                    blockType: BlockType.REPORTER,
+                    text: 'Front distance [VALUE]',
+                    arguments: {
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '---'
+                        }
+                    }
                 },
             ],
             menus: {
