@@ -43,9 +43,32 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             then(val => JSON.stringify(val)).
             catch(err => this._reportError(err));
     }
-    
 
-    //TODO subscriber
+    // RCJBot specific services
+    AlignService ({}, util) {
+        return this.ros.callService("/push_action_align", {}).
+            then(val => JSON.stringify(val)).
+            catch(err => this._reportError(err));
+    }
+
+    DriveService ({}, util) {
+        return this.ros.callService("/push_action_drive", {}).
+            then(val => JSON.stringify(val)).
+            catch(err => this._reportError(err));
+    }
+
+    RotateLeftService ({}, util) {
+        return this.ros.callService("/push_action_rotate", {data: true}).
+            then(val => JSON.stringify(val)).
+            catch(err => this._reportError(err));
+    }
+
+    RotateRightService ({}, util) {
+        return this.ros.callService("/push_action_rotate", {data: false}).
+            then(val => JSON.stringify(val)).
+            catch(err => this._reportError(err));
+    }
+    
     showSpeed ({}) {
         const TOPIC = "/cmd_vel"
         const that = this;
@@ -154,11 +177,37 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'showSpeed',
                     blockType: BlockType.REPORTER,
-                    text: 'Show current speed',
+                    text: 'Show current speed [SPEED_SUB]',
                     arguments: {
                         SPEED_SUB: variableArg
                     }
-                }
+                },
+
+                // RCJBot specific services
+                {
+                    opcode: 'AlignService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Align Rcjbot',
+                    arguments: {}
+                },
+                {
+                    opcode: 'DriveService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Drive Rcjbot forward 1 field',
+                    arguments: {}
+                },
+                {
+                    opcode: 'RotateLeftService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Turn Rcjbot left',
+                    arguments: {}
+                },
+                {
+                    opcode: 'RotateRightService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Turn Rcjbot right',
+                    arguments: {}
+                },
             ],
             menus: {
                 topicsMenu: reporterMenu('_updateTopicList'),
