@@ -74,7 +74,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                         if (rosTopic.messageType === 'std_msgs/String') {
                             msg.data = that._tryParse(msg.data, msg.data);
                         }
-                        // Return the numeric value instead of the full object
+                        // Return the numeric value 
                         resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
                     });
                 }).catch(err => this._reportError(err));
@@ -187,13 +187,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'ShowFrontDistance',
                     blockType: BlockType.REPORTER,
-                    text: 'Front distance [VALUE]',
-                    arguments: {
-                        VALUE: {
-                            type: ArgumentType.STRING,
-                            defaultValue: '---'
-                        }
-                    }
+                    text: 'Front distance',
+                    arguments: {}
                 },
             ],
             menus: {
