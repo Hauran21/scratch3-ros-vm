@@ -62,6 +62,72 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             then(val => JSON.stringify(val)).
             catch(err => this._reportError(err));
     }
+
+    BlinkLeftService ({}, util) {
+        return this.ros.callService(
+                "/camera_cmd", 
+                {
+                    cmd: 'turn',
+                    side: 0,
+                    color_on: [],
+                    color_off: [0, 0, 0, 0],
+                    duration_on: 0.5,
+                    duration_off: 0.5,
+                    repetitions: 8,
+                }
+            ).
+                then(val => JSON.stringify(val)).
+                catch(err => this._reportError(err));
+    }
+
+    BlinkRightService ({}, util) {
+        return this.ros.callService(
+                "/camera_cmd", 
+                {
+                    cmd: 'turn',
+                    side: 1,
+                    color_on: [],
+                    color_off: [0, 0, 0, 0],
+                    duration_on: 0.5,
+                    duration_off: 0.5,
+                    repetitions: 8,
+                }
+            ).
+                then(val => JSON.stringify(val)).
+                catch(err => this._reportError(err));
+    }
+
+    DropLeftPub ({}, util) {
+        const TOPIC = "/cmd_drop"
+        let data = {data: -1};
+        if (!this._isJSON(data)) data = {data: data};
+        this.ros.publishTopic(TOPIC, data).catch(err => {
+            console.log(err);
+            console.log("Advertising a new topic...");
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : this.ros.getRosType(data.data),
+            });
+            rosTopic.publish(data);
+        }).catch(err => this._reportError(err));
+    }
+
+    DropRightPub ({}, util) {
+        const TOPIC = "/cmd_drop"
+        let data = {data: 1};
+        if (!this._isJSON(data)) data = {data: data};
+        this.ros.publishTopic(TOPIC, data).catch(err => {
+            console.log(err);
+            console.log("Advertising a new topic...");
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : this.ros.getRosType(data.data),
+            });
+            rosTopic.publish(data);
+        }).catch(err => this._reportError(err));
+    }
     
     ShowFrontDistance ({}) {
         const TOPIC = "/cmd_vel_pub";
@@ -182,6 +248,30 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     opcode: 'RotateRightService',
                     blockType: BlockType.COMMAND,
                     text: 'Turn Rcjbot right',
+                    arguments: {}
+                },
+                {
+                    opcode: 'BlinkLeftService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Blink left ',
+                    arguments: {}
+                },
+                                {
+                    opcode: 'BlinkRightService',
+                    blockType: BlockType.COMMAND,
+                    text: 'Blink right ',
+                    arguments: {}
+                },
+                {
+                    opcode: 'DropLeftPub',
+                    blockType: BlockType.COMMAND,
+                    text: 'Drop left',
+                    arguments: {}
+                },
+                {
+                    opcode: 'DropRightPub',
+                    blockType: BlockType.COMMAND,
+                    text: 'Drop right',
                     arguments: {}
                 },
                 {
