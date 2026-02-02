@@ -40,26 +40,46 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
 
     // RCJBot specific services
     AlignService ({}, util) {
-        return this.ros.callService("/push_action_align", {}).
-            then(val => JSON.stringify(val)).
+        return this.ros.callService("/scratch_push_action_align", {}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('AlignService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
             catch(err => this._reportError(err));
     }
 
     DriveService ({}, util) {
-        return this.ros.callService("/push_action_drive", {}).
-            then(val => JSON.stringify(val)).
+        return this.ros.callService("/scratch_push_action_drive", {}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('DriveService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
             catch(err => this._reportError(err));
     }
 
     RotateLeftService ({}, util) {
-        return this.ros.callService("/push_action_rotate", {data: true}).
-            then(val => JSON.stringify(val)).
+        return this.ros.callService("/scratch_push_action_rotate", {data: true}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateLeftService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
             catch(err => this._reportError(err));
     }
 
     RotateRightService ({}, util) {
-        return this.ros.callService("/push_action_rotate", {data: false}).
-            then(val => JSON.stringify(val)).
+        return this.ros.callService("/scratch_push_action_rotate", {data: false}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateRightService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
             catch(err => this._reportError(err));
     }
 
@@ -76,8 +96,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     repetitions: 8,
                 }
             ).
-                then(val => JSON.stringify(val)).
-                catch(err => this._reportError(err));
+            catch(err => this._reportError(err));
     }
 
     BlinkRightService ({}, util) {
@@ -93,8 +112,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     repetitions: 8,
                 }
             ).
-                then(val => JSON.stringify(val)).
-                catch(err => this._reportError(err));
+            catch(err => this._reportError(err));
     }
 
     DropLeftPub ({}, util) {
