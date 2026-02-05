@@ -15,7 +15,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
 
     // customize to handle unadvertised topics
     moveForward ({SPEED}, util) {
-        const TOPIC = "/cmd_vel_sub"
+        const TOPIC = "/cmd_velcmd_vel_sub_sub"
         let speed = Number(SPEED);
         if (!this._isJSON(speed)) speed = {data: speed};
         this.ros.publishTopic(TOPIC, speed).catch(err => {
@@ -50,15 +50,22 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             catch(err => this._reportError(err));
     }
 
-    DriveService ({}, util) {
-        return this.ros.callService("/scratch_push_action_drive", {}).
-            then(val => {
+    DriveService ({FIELDS}, util) {
+        const fields = Math.max(0, Math.floor(Number(FIELDS) || 0));
+        if (fields === 0) return Promise.resolve(JSON.stringify({success: true}));
+
+        const callOnce = () => this.ros.callService("/scratch_push_action_drive", {})
+            .then(val => {
                 if (val.success !== true) {
                     throw new Error('DriveService failed: success=false');
                 }
-                return JSON.stringify(val);
-            }).
-            catch(err => this._reportError(err));
+                return val;
+            });
+
+        return Array.from({length: fields}).reduce(
+            (p) => p.then(callOnce),
+            Promise.resolve()
+        ).then(val => JSON.stringify(val)).catch(err => this._reportError(err));
     }
 
     RotateLeftService ({}, util) {
@@ -84,35 +91,37 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     BlinkLeftService ({}, util) {
-        return this.ros.callService(
-                "/camera_cmd", 
-                {
-                    cmd: 'turn',
-                    side: 0,
-                    color_on: [],
-                    color_off: [0, 0, 0, 0],
-                    duration_on: 0.5,
-                    duration_off: 0.5,
-                    repetitions: 8,
-                }
-            ).
-            catch(err => this._reportError(err));
+        const SERVICE = "/camera_cmd";
+        const request = {
+            cmd: 'turn',
+            side: 0,
+            color_on: [],
+            color_off: [0, 0, 0, 0],
+            duration_on: 0.5,
+            duration_off: 0.5,
+            repetitions: 8,
+        };
+        return this.ros.getService(SERVICE)
+            .then(rosService => rosService.callService(request))
+            .then(val => JSON.stringify(val))
+            .catch(err => this._reportError(err));
     }
 
     BlinkRightService ({}, util) {
-        return this.ros.callService(
-                "/camera_cmd", 
-                {
-                    cmd: 'turn',
-                    side: 1,
-                    color_on: [],
-                    color_off: [0, 0, 0, 0],
-                    duration_on: 0.5,
-                    duration_off: 0.5,
-                    repetitions: 8,
-                }
-            ).
-            catch(err => this._reportError(err));
+        const SERVICE = "/camera_cmd";
+        const request = {
+            cmd: 'turn',
+            side: 1,
+            color_on: [],
+            color_off: [0, 0, 0, 0],
+            duration_on: 0.5,
+            duration_off: 0.5,
+            repetitions: 8,
+        };
+        return this.ros.getService(SERVICE)
+            .then(rosService => rosService.callService(request))
+            .then(val => JSON.stringify(val))
+            .catch(err => this._reportError(err));
     }
 
     DropLeftPub ({}, util) {
@@ -253,8 +262,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'DriveService',
                     blockType: BlockType.COMMAND,
-                    text: 'Drive Rcjbot forward 1 field',
-                    arguments: {}
+                    text: 'Drive Rcjbot forward [FIELDS] field',
+                    arguments: {
+                        FIELDS: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
                 },
                 {
                     opcode: 'RotateLeftService',
