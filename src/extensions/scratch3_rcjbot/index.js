@@ -91,71 +91,50 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     BlinkLeftService ({}, util) {
-        const SERVICE = "/camera_cmd";
-        const request = {
-            cmd: 'turn',
-            side: 0,
-            color_on: [],
-            color_off: [0, 0, 0, 0],
-            duration_on: 0.5,
-            duration_off: 0.5,
-            repetitions: 8,
-        };
-        return this.ros.getService(SERVICE)
-            .then(rosService => rosService.callService(request))
-            .then(val => JSON.stringify(val))
-            .catch(err => this._reportError(err));
-    }
-
-    BlinkRightService ({}, util) {
-        const SERVICE = "/camera_cmd";
-        const request = {
-            cmd: 'turn',
-            side: 1,
-            color_on: [],
-            color_off: [0, 0, 0, 0],
-            duration_on: 0.5,
-            duration_off: 0.5,
-            repetitions: 8,
-        };
-        return this.ros.getService(SERVICE)
-            .then(rosService => rosService.callService(request))
-            .then(val => JSON.stringify(val))
-            .catch(err => this._reportError(err));
-    }
-
-    DropLeftPub ({}, util) {
-        const TOPIC = "/cmd_drop"
-        let data = {data: -1};
-        if (!this._isJSON(data)) data = {data: data};
-        this.ros.publishTopic(TOPIC, data).catch(err => {
-            console.log(err);
-            console.log("Advertising a new topic...");
-            var rosTopic = new ROSLIB.Topic({
-                ros : this.ros,
-                name : TOPIC,
-                messageType : this.ros.getRosType(data.data),
-            });
-            rosTopic.publish(data);
-        }).catch(err => this._reportError(err));
-    }
-
-    DropRightPub ({}, util) {
-        const TOPIC = "/cmd_drop"
-        let data = {data: 1};
-        if (!this._isJSON(data)) data = {data: data};
-        this.ros.publishTopic(TOPIC, data).catch(err => {
-            console.log(err);
-            console.log("Advertising a new topic...");
-            var rosTopic = new ROSLIB.Topic({
-                ros : this.ros,
-                name : TOPIC,
-                messageType : this.ros.getRosType(data.data),
-            });
-            rosTopic.publish(data);
-        }).catch(err => this._reportError(err));
+        return this.ros.callService("/scratch_push_action_blink", {data: true}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateLeftService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
+            catch(err => this._reportError(err));
     }
     
+    BlinkRightService ({}, util) {
+        return this.ros.callService("/scratch_push_action_blink", {data: false}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateLeftService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
+            catch(err => this._reportError(err));
+    }
+
+    DropLeftService ({}, util) {
+        return this.ros.callService("/scratch_push_action_drop", {data: true}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateLeftService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
+            catch(err => this._reportError(err));
+    }
+
+    DropRightService ({}, util) {
+        return this.ros.callService("/scratch_push_action_drop", {data: false}).
+            then(val => {
+                if (val.success !== true) {
+                    throw new Error('RotateLeftService failed: success=false');
+                }
+                return JSON.stringify(val);
+            }).
+            catch(err => this._reportError(err));
+    }
+    
+   
     ShowFrontDistance ({}) {
         const TOPIC = "/cmd_vel_pub";
         const that = this;
@@ -273,43 +252,43 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'RotateLeftService',
                     blockType: BlockType.COMMAND,
-                    text: 'Turn Rcjbot left',
+                    text: 'LEFT TURN',
                     arguments: {}
                 },
                 {
                     opcode: 'RotateRightService',
                     blockType: BlockType.COMMAND,
-                    text: 'Turn Rcjbot right',
+                    text: 'RIGHT TURN',
                     arguments: {}
                 },
                 {
                     opcode: 'BlinkLeftService',
                     blockType: BlockType.COMMAND,
-                    text: 'Blink left ',
+                    text: 'LEFT Blink',
                     arguments: {}
                 },
                                 {
                     opcode: 'BlinkRightService',
                     blockType: BlockType.COMMAND,
-                    text: 'Blink right ',
+                    text: 'RIGHT Blink',
                     arguments: {}
                 },
                 {
-                    opcode: 'DropLeftPub',
+                    opcode: 'DropLeftService',
                     blockType: BlockType.COMMAND,
-                    text: 'Drop left',
+                    text: 'LEFT Drop',
                     arguments: {}
                 },
                 {
-                    opcode: 'DropRightPub',
+                    opcode: 'DropRightService',
                     blockType: BlockType.COMMAND,
-                    text: 'Drop right',
+                    text: 'RIGHT Drop',
                     arguments: {}
                 },
                 {
                     opcode: 'ShowFrontDistance',
                     blockType: BlockType.REPORTER,
-                    text: 'Front distance',
+                    text: 'Front sensor distance',
                     arguments: {}
                 },
             ],
