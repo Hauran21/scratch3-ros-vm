@@ -11,6 +11,8 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
 
     constructor(runtime, extensionId) {
         super('RCJBot', extensionId ? extensionId : 'rcjbot', runtime);
+        this.imageSubscription = null;
+        this.isImageVisible = false;
     }
 
     // customize to handle unadvertised topics
@@ -153,6 +155,125 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         });
     }
 
+    showRosImage({TOPIC}) {
+        const that = this;
+        let topicName = TOPIC;
+        if (topicName && !topicName.startsWith('/')) topicName = `/${topicName}`;
+        
+        // Toggle behavior: if already visible, hide it
+        if (this.isImageVisible) {
+            this.hideRosImage();
+            return Promise.resolve('Image hidden');
+        }
+        
+        return new Promise((resolve, reject) => {
+            that.ros.getTopic(topicName).then(rosTopic => {
+                // Store subscription for cleanup
+                that.imageSubscription = rosTopic;
+                that.isImageVisible = true;
+                
+                rosTopic.subscribe(msg => {
+                    try {
+                        that._displayRosImage(msg);
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+                resolve(`Image subscription started for ${topicName}`);
+            }).catch(err => {
+                reject(err);
+            });
+        });
+    }
+
+    hideRosImage() {
+        // Unsubscribe from topic
+        if (this.imageSubscription) {
+            this.imageSubscription.unsubscribe();
+            this.imageSubscription = null;
+        }
+        
+        // Hide the canvas
+        const canvas = document.getElementById('ros-image-display');
+        if (canvas) {
+            canvas.style.display = 'none';
+        }
+        
+        this.isImageVisible = false;
+        return 'Image hidden';
+    }
+
+    _displayRosImage(imageMsg) {
+        const { width, height, encoding, data } = imageMsg;
+        
+        if (!width || !height || !data) {
+            return;
+        }
+        
+        // Create or get the canvas element for displaying the image
+        let canvas = document.getElementById('ros-image-display');
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.id = 'ros-image-display';
+            canvas.style.position = 'fixed';
+            canvas.style.top = '20px';
+            canvas.style.right = '20px';
+            canvas.style.border = '2px solid #333';
+            canvas.style.zIndex = '1000';
+            canvas.style.backgroundColor = 'white';
+            canvas.style.maxWidth = '320px';
+            canvas.style.maxHeight = '240px';
+            canvas.style.borderRadius = '8px';
+            canvas.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+            document.body.appendChild(canvas);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.createImageData(width, height);
+        
+        // Convert ROS image data to canvas ImageData
+        this._convertRosImageToImageData(data, width, height, imageData);
+        
+        ctx.putImageData(imageData, 0, 0);
+        canvas.style.display = 'block';
+    }
+
+    _convertRosImageToImageData(rosData, width, height, imageData) {
+        const pixels = imageData.data;
+        
+        let dataArray;
+        
+        // Handle different data formats
+        if (typeof rosData === 'string') {
+            const binaryString = atob(rosData);
+            dataArray = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                dataArray[i] = binaryString.charCodeAt(i);
+            }
+        } else if (rosData instanceof ArrayBuffer) {
+            dataArray = new Uint8Array(rosData);
+        } else if (Array.isArray(rosData)) {
+            dataArray = new Uint8Array(rosData);
+        } else if (rosData instanceof Uint8Array) {
+            dataArray = rosData;
+        } else {
+            dataArray = new Uint8Array(rosData);
+        }
+        
+        // Convert RGB8 to RGBA for canvas
+        for (let i = 0; i < width * height; i++) {
+            if (i * 3 + 2 < dataArray.length) {
+                pixels[i * 4] = dataArray[i * 3];     // R
+                pixels[i * 4 + 1] = dataArray[i * 3 + 1]; // G
+                pixels[i * 4 + 2] = dataArray[i * 3 + 2]; // B
+                pixels[i * 4 + 3] = 255;                  // A
+            }
+        }
+    }
+
     getInfo () {
         const topicArgs = {
             type: ArgumentType.STRING,
@@ -290,6 +411,17 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     blockType: BlockType.REPORTER,
                     text: 'Front sensor distance',
                     arguments: {}
+                },
+                {
+                    opcode: 'showRosImage',
+                    blockType: BlockType.REPORTER,
+                    text: 'Toggle ROS image from [TOPIC]',
+                    arguments: {
+                        TOPIC: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '/left_camera/image_raw'
+                        }
+                    }
                 },
             ],
             menus: {
