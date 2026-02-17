@@ -163,7 +163,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         // Toggle behavior: if already visible, hide it
         if (this.isImageVisible) {
             this.hideRosImage();
-            return Promise.resolve('Image hidden');
+            return Promise.resolve('Hidden');
         }
         
         return new Promise((resolve, reject) => {
@@ -174,14 +174,15 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 
                 rosTopic.subscribe(msg => {
                     try {
-                        that._displayRosImage(msg);
+                        that._displayRosImageInBlock(msg);
                     } catch (err) {
-                        reject(err);
+                        that._displayRosImageInBlock(msg);
                     }
                 });
-                resolve(`Image subscription started for ${topicName}`);
+                
+                resolve('Live');
             }).catch(err => {
-                reject(err);
+                reject('No camera');
             });
         });
     }
@@ -193,52 +194,98 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             this.imageSubscription = null;
         }
         
-        // Hide the canvas
-        const canvas = document.getElementById('ros-image-display');
+        // Hide the backdrop canvas
+        const canvas = document.getElementById('ros-backdrop-image');
         if (canvas) {
             canvas.style.display = 'none';
         }
         
         this.isImageVisible = false;
-        return 'Image hidden';
+        return 'Hidden';
     }
 
-    _displayRosImage(imageMsg) {
+    _displayRosImageInBlock(imageMsg) {
         const { width, height, encoding, data } = imageMsg;
         
         if (!width || !height || !data) {
             return;
         }
         
-        // Create or get the canvas element for displaying the image
-        let canvas = document.getElementById('ros-image-display');
+        // Create or get the canvas element for displaying the backdrop-style image
+        let canvas = document.getElementById('ros-backdrop-image');
         if (!canvas) {
             canvas = document.createElement('canvas');
-            canvas.id = 'ros-image-display';
+            canvas.id = 'ros-backdrop-image';
             canvas.style.position = 'fixed';
-            canvas.style.top = '20px';
-            canvas.style.right = '20px';
-            canvas.style.border = '2px solid #333';
-            canvas.style.zIndex = '1000';
-            canvas.style.backgroundColor = 'white';
-            canvas.style.maxWidth = '320px';
-            canvas.style.maxHeight = '240px';
+            canvas.style.top = '120px';
+            canvas.style.right = '40px';
+            canvas.style.width = '400px';
+            canvas.style.height = '300px';
+            canvas.style.border = '2px solid #CCCCCC';
             canvas.style.borderRadius = '8px';
-            canvas.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+            canvas.style.backgroundColor = '#F9F9F9';
+            canvas.style.zIndex = '999';
+            canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+            
+            // Add title bar
+            const titleBar = document.createElement('div');
+            titleBar.style.position = 'absolute';
+            titleBar.style.top = '-25px';
+            titleBar.style.left = '0px';
+            titleBar.style.right = '0px';
+            titleBar.style.height = '20px';
+            titleBar.style.backgroundColor = '#EEEEEE';
+            titleBar.style.color = '#575E75';
+            titleBar.style.textAlign = 'center';
+            titleBar.style.lineHeight = '20px';
+            titleBar.style.fontSize = '11px';
+            titleBar.style.fontFamily = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+            titleBar.style.borderRadius = '6px 6px 0 0';
+            titleBar.style.border = '2px solid #CCCCCC';
+            titleBar.style.borderBottom = 'none';
+            titleBar.textContent = 'Camera Feed';
+            canvas.parentNode?.insertBefore(titleBar, canvas) || document.body.appendChild(titleBar);
+            
             document.body.appendChild(canvas);
         }
-
-        canvas.width = width;
-        canvas.height = height;
         
-        const ctx = canvas.getContext('2d');
-        const imageData = ctx.createImageData(width, height);
+        canvas.style.display = 'block';
+        
+        // Set canvas internal resolution
+        canvas.width = 400;
+        canvas.height = 300;
+        
+        // Create temporary canvas for image processing
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        
+        const tempCtx = tempCanvas.getContext('2d');
+        const imageData = tempCtx.createImageData(width, height);
         
         // Convert ROS image data to canvas ImageData
         this._convertRosImageToImageData(data, width, height, imageData);
+        tempCtx.putImageData(imageData, 0, 0);
         
-        ctx.putImageData(imageData, 0, 0);
-        canvas.style.display = 'block';
+        // Draw scaled image to backdrop canvas
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Calculate aspect ratio to maintain proportions
+        const aspectRatio = width / height;
+        let drawWidth = canvas.width;
+        let drawHeight = canvas.height;
+        
+        if (aspectRatio > canvas.width / canvas.height) {
+            drawHeight = canvas.width / aspectRatio;
+        } else {
+            drawWidth = canvas.height * aspectRatio;
+        }
+        
+        const offsetX = (canvas.width - drawWidth) / 2;
+        const offsetY = (canvas.height - drawHeight) / 2;
+        
+        ctx.drawImage(tempCanvas, offsetX, offsetY, drawWidth, drawHeight);
     }
 
     _convertRosImageToImageData(rosData, width, height, imageData) {
@@ -413,9 +460,9 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     arguments: {}
                 },
                 {
-                    opcode: 'showRosImage',
+                    opcode: 'showRosImage', 
                     blockType: BlockType.REPORTER,
-                    text: 'Toggle ROS image from [TOPIC]',
+                    text: 'camera [TOPIC]',
                     arguments: {
                         TOPIC: {
                             type: ArgumentType.STRING,
