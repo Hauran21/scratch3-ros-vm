@@ -137,19 +137,44 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
     
    
-    ShowFrontDistance ({}) {
-        const TOPIC = "/cmd_vel_pub";
+    ShowFrontDistance ({TOPIC}) {
         const that = this;
+        let topicName = TOPIC;
+        topicName = `/${topicName}_tof_scan`;
         return new Promise(resolve => {
-            that.ros.getTopic(TOPIC).then(
+            that.ros.getTopic(topicName).then(
                 rosTopic => {
                     rosTopic.subscribe(msg => {
-                        // rosTopic.unsubscribe();
-                        if (rosTopic.messageType === 'std_msgs/String') {
+                        // Handle LaserScan message type
+                        if (rosTopic.messageType === 'sensor_msgs/LaserScan') {
+                            // Get ranges[1] from LaserScan message
+                            if (msg.ranges && msg.ranges.length > 1) {
+                                const distance = msg.ranges[1];
+                                // Return the float value, handle infinity/NaN
+                                if (isNaN(distance) || !isFinite(distance)) {
+                                    resolve(0.0);
+                                } else {
+                                    resolve(parseFloat(distance));
+                                }
+                            } else {
+                                resolve(0.0);
+                            }
+                        } else if (rosTopic.messageType === 'std_msgs/String') {
                             msg.data = that._tryParse(msg.data, msg.data);
+                            resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
+                        } else {
+                            // For other message types, try to access ranges[1] if it exists
+                            if (msg.ranges && msg.ranges.length > 1) {
+                                const distance = msg.ranges[1];
+                                if (isNaN(distance) || !isFinite(distance)) {
+                                    resolve(0.0);
+                                } else {
+                                    resolve(parseFloat(distance));
+                                }
+                            } else {
+                                resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
+                            }
                         }
-                        // Return the numeric value 
-                        resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
                     });
                 }).catch(err => this._reportError(err));
         });
@@ -158,7 +183,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     showRosImage({TOPIC}) {
         const that = this;
         let topicName = TOPIC;
-        if (topicName && !topicName.startsWith('/')) topicName = `/${topicName}`;
+        if (topicName) topicName = `/${topicName}/image_raw`;
         
         // Toggle behavior: if already visible, hide it
         if (this.isImageVisible) {
@@ -456,8 +481,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'ShowFrontDistance',
                     blockType: BlockType.REPORTER,
-                    text: 'Front sensor distance',
-                    arguments: {}
+                    text: '[TOPIC] distance sensor',
+                    arguments: {
+                        TOPIC: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'front_left'
+                        }
+                    }
                 },
                 {
                     opcode: 'showRosImage', 
@@ -466,7 +496,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     arguments: {
                         TOPIC: {
                             type: ArgumentType.STRING,
-                            defaultValue: '/left_camera/image_raw'
+                            defaultValue: 'left_camera'
                         }
                     }
                 },
