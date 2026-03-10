@@ -15,32 +15,6 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         this.isImageVisible = false;
     }
 
-    // customize to handle unadvertised topics
-    moveForward ({SPEED}, util) {
-        const TOPIC = "/cmd_velcmd_vel_sub_sub"
-        let speed = Number(SPEED);
-        if (!this._isJSON(speed)) speed = {data: speed};
-        this.ros.publishTopic(TOPIC, speed).catch(err => {
-            console.log(err);
-            console.log("Advertising a new topic...");
-            var rosTopic = new ROSLIB.Topic({
-                ros : this.ros,
-                name : TOPIC,
-                messageType : this.ros.getRosType(speed.data),
-            });
-            rosTopic.publish(speed);
-        }).catch(err => this._reportError(err));
-    }
-
-    ServiceMoveForward ({REQUEST}, util) {
-        const SERVICE = "/cmd_vel_service";
-        let req = this._getVariableValue(REQUEST, util.target) || this._tryParse(REQUEST);
-        return this.ros.callService(SERVICE, req).
-            then(val => JSON.stringify(val)).
-            catch(err => this._reportError(err));
-    }
-
-    // RCJBot specific services
     AlignService ({}, util) {
         return this.ros.callService("/scratch_push_action_align", {}).
             then(val => {
@@ -96,7 +70,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         return this.ros.callService("/scratch_push_action_blink", {data: true}).
             then(val => {
                 if (val.success !== true) {
-                    throw new Error('RotateLeftService failed: success=false');
+                    throw new Error('BlinkLeftService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
@@ -107,7 +81,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         return this.ros.callService("/scratch_push_action_blink", {data: false}).
             then(val => {
                 if (val.success !== true) {
-                    throw new Error('RotateLeftService failed: success=false');
+                    throw new Error('BlinkRightService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
@@ -118,7 +92,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         return this.ros.callService("/scratch_push_action_drop", {data: true}).
             then(val => {
                 if (val.success !== true) {
-                    throw new Error('RotateLeftService failed: success=false');
+                    throw new Error('DropLeftService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
@@ -126,17 +100,16 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     DropRightService ({}, util) {
-        return this.ros.callService("/scratch_push_action_drop", {data: false}).
+        return this.ros.callService("c", {data: false}).
             then(val => {
                 if (val.success !== true) {
-                    throw new Error('RotateLeftService failed: success=false');
+                    throw new Error('DropRightService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
             catch(err => this._reportError(err));
     }
-    
-   
+
     ShowFrontDistance ({TOPIC}) {
         const that = this;
         let topicName = TOPIC;
@@ -193,7 +166,6 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         
         return new Promise((resolve, reject) => {
             that.ros.getTopic(topicName).then(rosTopic => {
-                // Store subscription for cleanup
                 that.imageSubscription = rosTopic;
                 that.isImageVisible = true;
                 
@@ -347,60 +319,6 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     getInfo () {
-        const topicArgs = {
-            type: ArgumentType.STRING,
-            defaultValue: ' /cmd_vel\ '
-        };
-        const serviceArgs = {
-            type: ArgumentType.STRING,
-            defaultValue: '{"data": true}'
-        };
-        const stringArgs = {
-            type: ArgumentType.STRING,
-            defaultValue: ' 50 '
-        };
-
-
-        // OG Args
-        const stringArg = defValue => ({
-            type: ArgumentType.STRING,
-            defaultValue: defValue
-        });
-        const reporterMenu = opCode => ({
-            acceptReporters: true,
-            items: opCode
-        });
-        const variableArg = {
-            type: ArgumentType.STRING,
-            menu: 'variablesMenu',
-            defaultValue: this._updateVariableList()[0].text
-        };
-        const listVariableArg = {
-            type: ArgumentType.STRING,
-            menu: 'listVariablesMenu',
-            defaultValue: this._updateListVariableList()[0].text
-        };
-        const topicArg = {
-            type: ArgumentType.STRING,
-            menu: 'topicsMenu',
-            defaultValue: this.topicNames[0]
-        };
-        const actionArg = {
-            type: ArgumentType.STRING,
-            menu: 'actionsMenu',
-            defaultValue: this.actionNames[0]
-        };
-        const serviceArg = {
-            type: ArgumentType.STRING,
-            menu: 'servicesMenu',
-            defaultValue: this.serviceNames[0]
-        };
-        const paramArg = {
-            type: ArgumentType.STRING,
-            menu: 'paramsMenu',
-            defaultValue: this._updateParamList()[0].text
-        };
-
         return {
             id: this.extensionId,
             name: this.extensionName,
@@ -409,22 +327,6 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             menuIconURI: icon,
 
             blocks: [
-                {
-                    opcode: 'moveForward',
-                    blockType: BlockType.COMMAND,
-                    text: 'Move forward [SPEED]',
-                    arguments: {
-                        SPEED: stringArgs
-                    }
-                },
-                {
-                    opcode: 'ServiceMoveForward',
-                    blockType: BlockType.COMMAND,
-                    text: 'Service move forward',
-                    arguments: {}
-                },
-
-                // RCJBot specific services
                 {
                     opcode: 'AlignService',
                     blockType: BlockType.COMMAND,
@@ -500,15 +402,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                         }
                     }
                 },
-            ],
-            menus: {
-                topicsMenu: reporterMenu('_updateTopicList'),
-                actionsMenu: reporterMenu('_updateActionList'),
-                servicesMenu: reporterMenu('_updateServiceList'),
-                paramsMenu: reporterMenu('_updateParamList'),
-                variablesMenu: '_updateVariableList',
-                listVariablesMenu: '_updateListVariableList',
-            }
+            ]
         };
     }
 }
