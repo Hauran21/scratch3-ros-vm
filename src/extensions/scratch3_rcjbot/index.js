@@ -16,21 +16,21 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     AlignService ({}, util) {
-        return this.ros.callService("/scratch_push_action_align", {}).
+        return this.ros.callService("/push_action_align", {}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('AlignService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     DriveService ({FIELDS}, util) {
         const fields = Math.max(0, Math.floor(Number(FIELDS) || 0));
         if (fields === 0) return Promise.resolve(JSON.stringify({success: true}));
 
-        const callOnce = () => this.ros.callService("/scratch_push_action_drive", {})
+        const callOnce = () => this.ros.callService("/push_action_drive", {})
             .then(val => {
                 if (val.success !== true) {
                     throw new Error('DriveService failed: success=false');
@@ -41,83 +41,84 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         return Array.from({length: fields}).reduce(
             (p) => p.then(callOnce),
             Promise.resolve()
-        ).then(val => JSON.stringify(val)).catch(err => this._reportError(err));
+        ).then(val => JSON.stringify(val)).catch(err => { this._reportError(err); throw err; });
     }
 
     RotateLeftService ({}, util) {
-        return this.ros.callService("/scratch_push_action_rotate", {data: true}).
+        return this.ros.callService("/push_action_rotate", {data: true}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('RotateLeftService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     RotateRightService ({}, util) {
-        return this.ros.callService("/scratch_push_action_rotate", {data: false}).
+        return this.ros.callService("/push_action_rotate", {data: false}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('RotateRightService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     BlinkLeftService ({}, util) {
-        return this.ros.callService("/scratch_push_action_blink", {data: true}).
+        return this.ros.callService("/push_action_blink", {data: true}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('BlinkLeftService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
     
     BlinkRightService ({}, util) {
-        return this.ros.callService("/scratch_push_action_blink", {data: false}).
+        return this.ros.callService("push_action_blink", {data: false}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('BlinkRightService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     DropLeftService ({}, util) {
-        return this.ros.callService("/scratch_push_action_drop", {data: true}).
+        return this.ros.callService("push_action_drop", {data: true}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('DropLeftService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     DropRightService ({}, util) {
-        return this.ros.callService("c", {data: false}).
+        return this.ros.callService("push_action_drop", {data: false}).
             then(val => {
                 if (val.success !== true) {
                     throw new Error('DropRightService failed: success=false');
                 }
                 return JSON.stringify(val);
             }).
-            catch(err => this._reportError(err));
+            catch(err => { this._reportError(err); throw err; });
     }
 
     ShowFrontDistance ({TOPIC}) {
         const that = this;
         let topicName = TOPIC;
         topicName = `/${topicName}_tof_scan`;
-        return new Promise(resolve => {
-            that.ros.getTopic(topicName).then(
-                rosTopic => {
-                    rosTopic.subscribe(msg => {
+
+        return new Promise((resolve, reject) => {
+            that.ros.getTopic(topicName).then(rosTopic => {
+                const callback = (msg) => {
+                    try {
                         // Handle LaserScan message type
                         if (rosTopic.messageType === 'sensor_msgs/LaserScan') {
                             // Get ranges[1] from LaserScan message
@@ -148,8 +149,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                                 resolve(msg.data !== undefined ? msg.data : JSON.stringify(msg));
                             }
                         }
-                    });
-                }).catch(err => this._reportError(err));
+                    } finally {
+                        try { rosTopic.unsubscribe(callback); } catch (e) { try { rosTopic.unsubscribe(); } catch (e2) {} }
+                    }
+                };
+
+                rosTopic.subscribe(callback);
+            }).catch(err => { that._reportError(err); reject(err); });
         });
     }
 
@@ -163,139 +169,152 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             this.hideRosImage();
             return Promise.resolve('Hidden');
         }
-        
+
         return new Promise((resolve, reject) => {
             that.ros.getTopic(topicName).then(rosTopic => {
-                that.imageSubscription = rosTopic;
-                that.isImageVisible = true;
-                
-                rosTopic.subscribe(msg => {
+                const callback = (msg) => {
                     try {
                         that._displayRosImageInBlock(msg);
                     } catch (err) {
-                        that._displayRosImageInBlock(msg);
+                        // best-effort display
+                        try { that._displayRosImageInBlock(msg); } catch (e) {}
                     }
-                });
-                
+                };
+
+                rosTopic.subscribe(callback);
+                that.imageSubscription = { rosTopic, callback };
+                that.isImageVisible = true;
                 resolve('Live');
-            }).catch(err => {
-                reject('No camera');
-            });
+            }).catch(err => { that._reportError(err); reject('No camera'); });
         });
     }
 
     hideRosImage() {
         // Unsubscribe from topic
         if (this.imageSubscription) {
-            this.imageSubscription.unsubscribe();
+            const { rosTopic, callback } = this.imageSubscription;
+            try { rosTopic.unsubscribe(callback); } catch (e) { try { rosTopic.unsubscribe(); } catch (e2) {} }
             this.imageSubscription = null;
         }
-        
-        // Hide the backdrop canvas
-        const canvas = document.getElementById('ros-backdrop-image');
-        if (canvas) {
-            canvas.style.display = 'none';
+
+        // Hide the container
+        const container = document.getElementById('ros-backdrop-container');
+        if (container) {
+            container.style.display = 'none';
         }
-        
+
         this.isImageVisible = false;
         return 'Hidden';
     }
 
     _displayRosImageInBlock(imageMsg) {
         const { width, height, encoding, data } = imageMsg;
-        
-        if (!width || !height || !data) {
-            return;
-        }
-        
-        // Create or get the canvas element for displaying the backdrop-style image
-        let canvas = document.getElementById('ros-backdrop-image');
-        if (!canvas) {
-            canvas = document.createElement('canvas');
-            canvas.id = 'ros-backdrop-image';
-            canvas.style.position = 'fixed';
-            canvas.style.top = '120px';
-            canvas.style.right = '40px';
-            canvas.style.width = '400px';
-            canvas.style.height = '300px';
-            canvas.style.border = '2px solid #CCCCCC';
-            canvas.style.borderRadius = '8px';
-            canvas.style.backgroundColor = '#F9F9F9';
-            canvas.style.zIndex = '999';
-            canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-            
-            // Add title bar
+
+        if (!width || !height || !data) return;
+
+        // Create or get a container for title + canvas
+        let container = document.getElementById('ros-backdrop-container');
+        let canvas;
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'ros-backdrop-container';
+            container.style.position = 'fixed';
+            container.style.top = '120px';
+            container.style.right = '40px';
+            container.style.width = '400px';
+            container.style.zIndex = '999';
+            container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+
             const titleBar = document.createElement('div');
-            titleBar.style.position = 'absolute';
-            titleBar.style.top = '-25px';
-            titleBar.style.left = '0px';
-            titleBar.style.right = '0px';
-            titleBar.style.height = '20px';
+            titleBar.id = 'ros-backdrop-title';
+            titleBar.style.height = '24px';
             titleBar.style.backgroundColor = '#EEEEEE';
             titleBar.style.color = '#575E75';
             titleBar.style.textAlign = 'center';
-            titleBar.style.lineHeight = '20px';
-            titleBar.style.fontSize = '11px';
+            titleBar.style.lineHeight = '24px';
+            titleBar.style.fontSize = '12px';
             titleBar.style.fontFamily = 'Helvetica Neue, Helvetica, Arial, sans-serif';
-            titleBar.style.borderRadius = '6px 6px 0 0';
             titleBar.style.border = '2px solid #CCCCCC';
             titleBar.style.borderBottom = 'none';
+            titleBar.style.borderRadius = '6px 6px 0 0';
             titleBar.textContent = 'Camera Feed';
-            canvas.parentNode?.insertBefore(titleBar, canvas) || document.body.appendChild(titleBar);
-            
-            document.body.appendChild(canvas);
+            container.appendChild(titleBar);
+
+            canvas = document.createElement('canvas');
+            canvas.id = 'ros-backdrop-image';
+            canvas.style.width = '400px';
+            canvas.style.height = '300px';
+            canvas.style.border = '2px solid #CCCCCC';
+            canvas.style.borderRadius = '0 0 6px 6px';
+            canvas.style.backgroundColor = '#F9F9F9';
+            container.appendChild(canvas);
+
+            document.body.appendChild(container);
+        } else {
+            canvas = container.querySelector('#ros-backdrop-image');
+            container.style.display = 'block';
         }
-        
-        canvas.style.display = 'block';
-        
+
         // Set canvas internal resolution
         canvas.width = 400;
         canvas.height = 300;
-        
+
         // Create temporary canvas for image processing
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = width;
         tempCanvas.height = height;
-        
+
         const tempCtx = tempCanvas.getContext('2d');
         const imageData = tempCtx.createImageData(width, height);
-        
+
         // Convert ROS image data to canvas ImageData
-        this._convertRosImageToImageData(data, width, height, imageData);
+        this._convertRosImageToImageData(data, width, height, imageData, encoding);
         tempCtx.putImageData(imageData, 0, 0);
-        
+
         // Draw scaled image to backdrop canvas
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Calculate aspect ratio to maintain proportions
         const aspectRatio = width / height;
         let drawWidth = canvas.width;
         let drawHeight = canvas.height;
-        
+
         if (aspectRatio > canvas.width / canvas.height) {
             drawHeight = canvas.width / aspectRatio;
         } else {
             drawWidth = canvas.height * aspectRatio;
         }
-        
+
         const offsetX = (canvas.width - drawWidth) / 2;
         const offsetY = (canvas.height - drawHeight) / 2;
-        
+
         ctx.drawImage(tempCanvas, offsetX, offsetY, drawWidth, drawHeight);
     }
 
-    _convertRosImageToImageData(rosData, width, height, imageData) {
+    _convertRosImageToImageData(rosData, width, height, imageData, encoding) {
         const pixels = imageData.data;
-        
+
         let dataArray;
-        
+
+        // atob/polyfill: prefer browser atob, fall back to Buffer if available
+        const _atob = (typeof window !== 'undefined' && typeof window.atob === 'function')
+            ? window.atob
+            : (typeof globalThis !== 'undefined' && globalThis.Buffer)
+                ? (str => globalThis.Buffer.from(str, 'base64').toString('binary'))
+                : null;
+
         // Handle different data formats
         if (typeof rosData === 'string') {
-            const binaryString = atob(rosData);
-            dataArray = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                dataArray[i] = binaryString.charCodeAt(i);
+            if (!_atob) {
+                // Cannot decode base64 string in this environment
+                dataArray = new Uint8Array(0);
+            } else {
+                const binaryString = _atob(rosData);
+                dataArray = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    dataArray[i] = binaryString.charCodeAt(i);
+                }
             }
         } else if (rosData instanceof ArrayBuffer) {
             dataArray = new Uint8Array(rosData);
@@ -304,16 +323,45 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         } else if (rosData instanceof Uint8Array) {
             dataArray = rosData;
         } else {
-            dataArray = new Uint8Array(rosData);
+            try {
+                dataArray = new Uint8Array(rosData);
+            } catch (e) {
+                dataArray = new Uint8Array(0);
+            }
         }
-        
-        // Convert RGB8 to RGBA for canvas
-        for (let i = 0; i < width * height; i++) {
-            if (i * 3 + 2 < dataArray.length) {
-                pixels[i * 4] = dataArray[i * 3];     // R
-                pixels[i * 4 + 1] = dataArray[i * 3 + 1]; // G
-                pixels[i * 4 + 2] = dataArray[i * 3 + 2]; // B
-                pixels[i * 4 + 3] = 255;                  // A
+
+        // Interpret encoding
+        const enc = (encoding || '').toString().toLowerCase();
+
+        if (enc.includes('bgr')) {
+            for (let i = 0; i < width * height; i++) {
+                const base = i * 3;
+                if (base + 2 < dataArray.length) {
+                    pixels[i * 4] = dataArray[base + 2];     // R
+                    pixels[i * 4 + 1] = dataArray[base + 1]; // G
+                    pixels[i * 4 + 2] = dataArray[base];     // B
+                    pixels[i * 4 + 3] = 255;
+                } else {
+                    pixels[i * 4] = 0; pixels[i * 4 + 1] = 0; pixels[i * 4 + 2] = 0; pixels[i * 4 + 3] = 255;
+                }
+            }
+        } else if (enc.includes('mono')) {
+            for (let i = 0; i < width * height; i++) {
+                const v = dataArray[i] || 0;
+                pixels[i * 4] = v; pixels[i * 4 + 1] = v; pixels[i * 4 + 2] = v; pixels[i * 4 + 3] = 255;
+            }
+        } else {
+            // default: assume RGB8
+            for (let i = 0; i < width * height; i++) {
+                const base = i * 3;
+                if (base + 2 < dataArray.length) {
+                    pixels[i * 4] = dataArray[base];     // R
+                    pixels[i * 4 + 1] = dataArray[base + 1]; // G
+                    pixels[i * 4 + 2] = dataArray[base + 2]; // B
+                    pixels[i * 4 + 3] = 255;
+                } else {
+                    pixels[i * 4] = 0; pixels[i * 4 + 1] = 0; pixels[i * 4 + 2] = 0; pixels[i * 4 + 3] = 255;
+                }
             }
         }
     }
