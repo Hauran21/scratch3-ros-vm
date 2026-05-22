@@ -65,6 +65,60 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             }).
             catch(err => { this._reportError(err); throw err; });
     }
+    
+    DriveForward ({VEL}, util) {
+        const TOPIC = "/diff_drive_controller/cmd_vel";
+        const velX = Number(VEL);
+        const twistStamped = {
+            header: {
+                stamp: {sec: 0, nanosec: 0},
+                frame_id: 'None'
+            },
+            twist: {
+                linear: {x: Number.isFinite(velX) ? velX : 0.0, y: 0.0, z: 0.0},
+                angular: {x: 0.0, y: 0.0, z: 0.0}
+            }
+        };
+
+        return this.ros.publishTopic(TOPIC, twistStamped).catch(err => {
+            console.log(err);
+            console.log("Advertising a new topic...");
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : 'geometry_msgs/TwistStamped'
+            });
+            rosTopic.publish(twistStamped);
+        }).catch(err => this._reportError(err));
+    }
+
+    Turn ({VEL}, util) {
+        const TOPIC = "/diff_drive_controller/cmd_vel";
+        const velZ = Number(VEL);
+        const twistStamped = {
+            header: {
+                stamp: {sec: 0, nanosec: 0},
+                frame_id: 'None'
+            },
+            twist: {
+                linear: {x: 0.0, y: 0.0, z: 0.0},
+                angular: {x: 0.0, y: 0.0, z: Number.isFinite(velZ) ? velZ : 0.0}
+            }
+        };
+
+        return this.ros.publishTopic(TOPIC, twistStamped).catch(err => {
+            console.log(err);
+            console.log("Advertising a new topic...");
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : 'geometry_msgs/TwistStamped'
+            });
+            rosTopic.publish(twistStamped);
+        }).catch(err => this._reportError(err));
+    }
+
+    
 
     BlinkLeftService ({}, util) {
         return this.ros.callService("/push_action_blink", {data: true}).
@@ -158,6 +212,60 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             }).catch(err => { that._reportError(err); reject(err); });
         });
     }
+
+    ShowAngle () {
+        const that = this;
+        const topicName = '/diff_drive_controller/odom';
+
+        return new Promise((resolve, reject) => {
+            that.ros.getTopic(topicName).then(rosTopic => {
+                const callback = (msg) => {
+                    try {
+                        const angularZ = msg && msg.twist && msg.twist.twist && msg.twist.twist.angular
+                            ? msg.twist.twist.angular.z
+                            : 0.0;
+                        const value = Number(angularZ);
+                        resolve(Number.isFinite(value) ? value : 0.0);
+                    } finally {
+                        try { rosTopic.unsubscribe(callback); } catch (e) { try { rosTopic.unsubscribe(); } catch (e2) {} }
+                    }
+                };
+
+                rosTopic.subscribe(callback);
+            }).catch(err => { that._reportError(err); reject(err); });
+        });
+    }
+
+    ShowBottomMarker () {
+        const that = this;
+        const topicName = '/marker/bottom';
+
+        return new Promise((resolve, reject) => {
+            that.ros.getTopic(topicName).then(rosTopic => {
+                const callback = (msg) => {
+                    try {
+                        // If it's a std_msgs/String or has a data field, return the string (try parse if helper exists)
+                        if (rosTopic.messageType === 'std_msgs/String' || (msg && typeof msg.data !== 'undefined')) {
+                            const parsed = (that._tryParse && typeof that._tryParse === 'function')
+                                ? that._tryParse(msg.data, msg.data)
+                                : msg.data;
+                            resolve(parsed !== undefined ? parsed : String(msg.data));
+                        } else if (msg && typeof msg.data !== 'undefined') {
+                            resolve(msg.data);
+                        } else {
+                            resolve(JSON.stringify(msg));
+                        }
+                    } finally {
+                        try { rosTopic.unsubscribe(callback); } catch (e) { try { rosTopic.unsubscribe(); } catch (e2) {} }
+                    }
+                };
+
+                rosTopic.subscribe(callback);
+            }).catch(err => { that._reportError(err); reject(err); });
+        });
+    }
+
+    
 
     showRosImage({TOPIC}) {
         const that = this;
@@ -405,6 +513,28 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     arguments: {}
                 },
                 {
+                    opcode: 'DriveForward',
+                    blockType: BlockType.COMMAND,
+                    text: 'DRIVE [VEL]',
+                    arguments: {
+                        VEL: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0.3'
+                        }
+                    }
+                },
+                {
+                    opcode: 'Turn',
+                    blockType: BlockType.COMMAND,
+                    text: 'TURN [VEL]',
+                    arguments: {
+                        VEL: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '0.3'
+                        }
+                    }
+                },
+                {
                     opcode: 'BlinkLeftService',
                     blockType: BlockType.COMMAND,
                     text: 'LEFT Blink',
@@ -438,6 +568,18 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                             defaultValue: 'front_left'
                         }
                     }
+                },
+                {
+                    opcode: 'ShowAngle',
+                    blockType: BlockType.REPORTER,
+                    text: 'Robot Angle',
+                    arguments: {}
+                },
+                {
+                    opcode: 'ShowBottomMarker',
+                    blockType: BlockType.REPORTER,
+                    text: 'Bottom Marker',
+                    arguments: {}
                 },
                 {
                     opcode: 'showRosImage', 
