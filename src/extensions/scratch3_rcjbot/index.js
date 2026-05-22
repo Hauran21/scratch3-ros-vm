@@ -288,9 +288,7 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
             }).catch(err => { that._reportError(err); reject(err); });
         });
     }
-
     
-
     showRosImage({TOPIC}) {
         const that = this;
         let topicName = TOPIC;
@@ -422,6 +420,12 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
         const offsetY = (canvas.height - drawHeight) / 2;
 
         ctx.drawImage(tempCanvas, offsetX, offsetY, drawWidth, drawHeight);
+    }
+
+    Wait ({TIME}, util) {
+        const t = Number(TIME) || 0;
+        // Return a Promise that resolves after t seconds
+        return new Promise(resolve => setTimeout(resolve, Math.max(0, t) * 1000));
     }
 
     _convertRosImageToImageData(rosData, width, height, imageData, encoding) {
@@ -604,6 +608,17 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                     blockType: BlockType.REPORTER,
                     text: 'Bottom Marker',
                     arguments: {}
+                },
+                {
+                    opcode: 'Wait',
+                    blockType: BlockType.COMMAND,
+                    text: 'Wait [TIME]',
+                    arguments: {
+                        TIME: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: '1.0'
+                        }
+                    }
                 },
                 {
                     opcode: 'showRosImage', 
