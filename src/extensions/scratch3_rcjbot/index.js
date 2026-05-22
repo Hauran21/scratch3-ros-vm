@@ -157,25 +157,35 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     }
 
     DropLeftService ({}, util) {
-        return this.ros.callService("push_action_drop", {data: true}).
-            then(val => {
-                if (val.success !== true) {
-                    throw new Error('DropLeftService failed: success=false');
-                }
-                return JSON.stringify(val);
-            }).
-            catch(err => { this._reportError(err); throw err; });
+        const TOPIC = '/cmd_drop';
+        const message = {data: -1};
+
+        return this.ros.publishTopic(TOPIC, message).catch(err => {
+            console.log(err);
+            console.log('Advertising a new topic...');
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : 'std_msgs/Int8'
+            });
+            rosTopic.publish(message);
+        }).catch(err => this._reportError(err));
     }
 
     DropRightService ({}, util) {
-        return this.ros.callService("push_action_drop", {data: false}).
-            then(val => {
-                if (val.success !== true) {
-                    throw new Error('DropRightService failed: success=false');
-                }
-                return JSON.stringify(val);
-            }).
-            catch(err => { this._reportError(err); throw err; });
+        const TOPIC = '/cmd_drop';
+        const message = {data: 1};
+
+        return this.ros.publishTopic(TOPIC, message).catch(err => {
+            console.log(err);
+            console.log('Advertising a new topic...');
+            var rosTopic = new ROSLIB.Topic({
+                ros : this.ros,
+                name : TOPIC,
+                messageType : 'std_msgs/Int8'
+            });
+            rosTopic.publish(message);
+        }).catch(err => this._reportError(err));
     }
 
     ShowFrontDistance ({TOPIC}) {
