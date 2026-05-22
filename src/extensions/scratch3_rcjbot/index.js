@@ -121,25 +121,39 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
     
 
     BlinkLeftService ({}, util) {
-        return this.ros.callService("/push_action_blink", {data: true}).
-            then(val => {
-                if (val.success !== true) {
-                    throw new Error('BlinkLeftService failed: success=false');
-                }
+        const payload = {
+            cmd: 'turn',
+            side: 0,
+            color_on: [],
+            color_off: [0, 0, 0, 0],
+            duration_on: 0.5,
+            duration_off: 0.5,
+            repetitions: 8
+        };
+
+        return this.ros.callService('/camera_cmd', payload)
+            .then(val => {
                 return JSON.stringify(val);
-            }).
-            catch(err => { this._reportError(err); throw err; });
+            })
+            .catch(err => { this._reportError(err); throw err; });
     }
     
     BlinkRightService ({}, util) {
-        return this.ros.callService("push_action_blink", {data: false}).
-            then(val => {
-                if (val.success !== true) {
-                    throw new Error('BlinkRightService failed: success=false');
-                }
+        const payload = {
+            cmd: 'turn',
+            side: 1,
+            color_on: [],
+            color_off: [0, 0, 0, 0],
+            duration_on: 0.5,
+            duration_off: 0.5,
+            repetitions: 8
+        };
+
+        return this.ros.callService('/camera_cmd', payload)
+            .then(val => {
                 return JSON.stringify(val);
-            }).
-            catch(err => { this._reportError(err); throw err; });
+            })
+            .catch(err => { this._reportError(err); throw err; });
     }
 
     DropLeftService ({}, util) {
