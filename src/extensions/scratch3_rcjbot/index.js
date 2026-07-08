@@ -239,17 +239,27 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
 
     ShowAngle () {
         const that = this;
-        const topicName = '/diff_drive_controller/odom';
+        const topicName = '/odom';
 
         return new Promise((resolve, reject) => {
             that.ros.getTopic(topicName).then(rosTopic => {
                 const callback = (msg) => {
                     try {
-                        const angularZ = msg && msg.twist && msg.twist.twist && msg.twist.twist.angular
-                            ? msg.twist.twist.angular.z
-                            : 0.0;
-                        const value = Number(angularZ);
-                        resolve(Number.isFinite(value) ? value : 0.0);
+                        // Assume nav_msgs/Odometry: use pose.pose.orientation quaternion -> yaw
+                        if (!msg || !msg.pose || !msg.pose.pose || !msg.pose.pose.orientation) {
+                            reject(new Error('No orientation in odom message'));
+                            return;
+                        }
+
+                        const q = msg.pose.pose.orientation;
+                        const x = Number(q.x) || 0;
+                        const y = Number(q.y) || 0;
+                        const z = Number(q.z) || 0;
+                        const w = Number(q.w) || 0;
+                        const siny_cosp = 2 * (w * z + x * y);
+                        const cosy_cosp = 1 - 2 * (y * y + z * z);
+                        const yaw = Math.atan2(siny_cosp, cosy_cosp);
+                        resolve(yaw * 180 / Math.PI);
                     } finally {
                         try { rosTopic.unsubscribe(callback); } catch (e) { try { rosTopic.unsubscribe(); } catch (e2) {} }
                     }
@@ -514,13 +524,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'AlignService',
                     blockType: BlockType.COMMAND,
-                    text: 'Align Rcjbot',
+                    text: 'Action: Align Rcjbot',
                     arguments: {}
                 },
                 {
                     opcode: 'DriveService',
                     blockType: BlockType.COMMAND,
-                    text: 'Drive Rcjbot forward [FIELDS] field',
+                    text: 'Action: Drive Rcjbot forward [FIELDS] field',
                     arguments: {
                         FIELDS: {
                             type: ArgumentType.NUMBER,
@@ -531,13 +541,13 @@ class Scratch3RcjbotBlocks extends Scratch3RosBase {
                 {
                     opcode: 'RotateLeftService',
                     blockType: BlockType.COMMAND,
-                    text: 'LEFT TURN',
+                    text: 'Action: LEFT TURN',
                     arguments: {}
                 },
                 {
                     opcode: 'RotateRightService',
                     blockType: BlockType.COMMAND,
-                    text: 'RIGHT TURN',
+                    text: 'Action: RIGHT TURN',
                     arguments: {}
                 },
                 {
